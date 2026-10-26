@@ -1454,6 +1454,7 @@ function initCrmAdminForms() {
     const exigir_email = document.getElementById('estagio-exigir-email')?.checked || false;
     const exigir_documentos = document.getElementById('estagio-exigir-documentos')?.checked || false;
     const exigir_dados_conta = document.getElementById('estagio-exigir-dados-conta')?.checked || false;
+    const exigir_observacao = document.getElementById('estagio-exigir-observacao')?.checked || false;
     const exibir_valor = document.getElementById('estagio-exibir-valor')?.checked ?? true;
     const exibir_cpf = document.getElementById('estagio-exibir-cpf')?.checked ?? true;
     const exibir_telefone = document.getElementById('estagio-exibir-telefone')?.checked ?? true;
@@ -1474,7 +1475,7 @@ function initCrmAdminForms() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
         nome, pipeline_tipo, cor, ordem, motivos_perda, exigir_obs,
-        exigir_valor, exigir_email, exigir_documentos, exigir_dados_conta,
+        exigir_valor, exigir_email, exigir_documentos, exigir_dados_conta, exigir_observacao,
         exibir_valor, exibir_cpf, exibir_telefone,
         exibir_email, exibir_documentos, exibir_observacao,
         modal_exibir_valor, modal_exibir_email, modal_exibir_docs,
@@ -1509,6 +1510,7 @@ function initCrmAdminForms() {
     const exigir_email = document.getElementById('edit-estagio-exigir-email')?.checked || false;
     const exigir_documentos = document.getElementById('edit-estagio-exigir-documentos')?.checked || false;
     const exigir_dados_conta = document.getElementById('edit-estagio-exigir-dados-conta')?.checked || false;
+    const exigir_observacao = document.getElementById('edit-estagio-exigir-observacao')?.checked || false;
     const exibir_valor = document.getElementById('edit-estagio-exibir-valor')?.checked ?? true;
     const exibir_cpf = document.getElementById('edit-estagio-exibir-cpf')?.checked ?? true;
     const exibir_telefone = document.getElementById('edit-estagio-exibir-telefone')?.checked ?? true;
@@ -1529,7 +1531,7 @@ function initCrmAdminForms() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
         nome, cor, ordem, motivos_perda, exigir_obs,
-        exigir_valor, exigir_email, exigir_documentos, exigir_dados_conta,
+        exigir_valor, exigir_email, exigir_documentos, exigir_dados_conta, exigir_observacao,
         exibir_valor, exibir_cpf, exibir_telefone,
         exibir_email, exibir_documentos, exibir_observacao,
         modal_exibir_valor, modal_exibir_email, modal_exibir_docs,
@@ -1740,6 +1742,7 @@ async function loadCrmAdminEstagios() {
         ${e.exigir_email ? `<span class="badge" style="background: rgba(59, 130, 246, 0.12); color: #60A5FA; border: 1px solid rgba(59, 130, 246, 0.25); font-size: 10px; font-weight: 700;">EXIGE E-MAIL</span>` : ''}
         ${e.exigir_documentos ? `<span class="badge" style="background: rgba(245, 158, 11, 0.12); color: #FBBF24; border: 1px solid rgba(245, 158, 11, 0.25); font-size: 10px; font-weight: 700;">EXIGE DOCS</span>` : ''}
         ${e.exigir_dados_conta ? `<span class="badge" style="background: rgba(14, 165, 233, 0.12); color: #38BDF8; border: 1px solid rgba(14, 165, 233, 0.25); font-size: 10px; font-weight: 700;">EXIGE DADOS DA CONTA</span>` : ''}
+        ${e.exigir_observacao ? `<span class="badge" style="background: rgba(139, 92, 246, 0.12); color: #A78BFA; border: 1px solid rgba(139, 92, 246, 0.25); font-size: 10px; font-weight: 700;">EXIGE OBS AO MOVER</span>` : ''}
         ${e.exigir_obs ? `<span class="badge" style="background: rgba(168, 85, 247, 0.12); color: #C084FC; border: 1px solid rgba(168, 85, 247, 0.25); font-size: 10px; font-weight: 700;">EXIGE OBS EM PERDA</span>` : ''}
         ${visOcultasHtml}
         ${visExtrasHtml}
@@ -1775,6 +1778,8 @@ function openEditEstagioModal(id) {
   document.getElementById('edit-estagio-exigir-documentos').checked = !!estagio.exigir_documentos;
   const editExigirContaEl = document.getElementById('edit-estagio-exigir-dados-conta');
   if (editExigirContaEl) editExigirContaEl.checked = !!estagio.exigir_dados_conta;
+  const editExigirObsEl = document.getElementById('edit-estagio-exigir-observacao');
+  if (editExigirObsEl) editExigirObsEl.checked = !!estagio.exigir_observacao;
   document.getElementById('edit-estagio-exibir-valor').checked = estagio.exibir_valor !== false;
   document.getElementById('edit-estagio-exibir-cpf').checked = estagio.exibir_cpf !== false;
   document.getElementById('edit-estagio-exibir-telefone').checked = estagio.exibir_telefone !== false;
@@ -2599,6 +2604,16 @@ function initLeadDetailsForm() {
     if (isEmailRequired && (!email || email.trim() === '' || !email.includes('@'))) {
       if (typeof showToast === 'function') {
         showToast('E-mail válido é obrigatório para a etapa de Abertura de Conta.', 'error');
+      }
+      return;
+    }
+
+    const originalStageId = document.getElementById('modal-lead-select-estagio')?.dataset.originalStageId;
+    const stageChanged = String(originalStageId) !== String(novoEstagioId);
+
+    if (stageChanged && selectedEst && selectedEst.exigir_observacao && (!observacoes || observacoes.trim() === '')) {
+      if (typeof showToast === 'function') {
+        showToast(`Para mover para a coluna "${selectedEst.nome}", é obrigatório preencher as Anotações & Observações do Lead.`, 'error');
       }
       return;
     }

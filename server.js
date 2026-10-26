@@ -2826,6 +2826,16 @@ app.put('/api/crm/kanban/leads/:id/move', requireAuth, async (req, res) => {
           });
         }
       }
+
+      // 5. Exigir Observação / Anotações do Lead
+      if (novoEstagio.exigir_observacao) {
+        const cliente = await dbGet('SELECT observacoes FROM crm_clientes WHERE id = ?', [lead.cliente_id]);
+        if (!cliente || !cliente.observacoes || cliente.observacoes.trim() === '') {
+          return res.status(400).json({ 
+            error: `Para mover o lead para a coluna "${novoEstagio.nome}", é obrigatório preencher as Anotações & Observações do Lead.` 
+          });
+        }
+      }
     }
 
     const estagioAnteriorId = lead.estagio_id;
@@ -2933,13 +2943,19 @@ app.post('/api/crm/kanban/leads/:id/transfer-to-closer', requireAuth, async (req
 
     // Busca o primeiro estágio ativo do pipeline de Closers
     const firstCloserStage = await dbGet(`
-      SELECT id, nome FROM crm_kanban_estagios 
+      SELECT id, nome, exigir_observacao FROM crm_kanban_estagios 
       WHERE pipeline_tipo = 'closer' AND ativo = TRUE 
       ORDER BY ordem ASC LIMIT 1
     `);
 
     if (!firstCloserStage) {
       return res.status(400).json({ error: 'Nenhum estágio ativo configurado para o pipeline de Closers.' });
+    }
+
+    if (firstCloserStage.exigir_observacao) {
+      if (!cliente.observacoes || cliente.observacoes.trim() === '') {
+        return res.status(400).json({ error: `Para transferir o lead para a coluna "${firstCloserStage.nome}", é obrigatório preencher as Anotações & Observações do Lead.` });
+      }
     }
 
     // Roteamento: sorteia o próximo closer da fila (excluindo o SDR de origem se houver outros)
@@ -3684,7 +3700,7 @@ app.get('/api/crm/admin/estagios', requireAuth, requireRole('admin'), async (req
 app.post('/api/crm/admin/estagios', requireAuth, requireRole('admin'), async (req, res) => {
   const { 
     nome, pipeline_tipo, cor, ordem, motivos_perda, exigir_obs,
-    exigir_valor, exigir_email, exigir_documentos, exigir_dados_conta,
+    exigir_valor, exigir_email, exigir_documentos, exigir_dados_conta, exigir_observacao,
     exibir_valor, exibir_cpf, exibir_telefone,
     exibir_email, exibir_documentos, exibir_observacao,
     modal_exibir_valor, modal_exibir_email, modal_exibir_docs,
@@ -3701,10 +3717,10 @@ app.post('/api/crm/admin/estagios', requireAuth, requireRole('admin'), async (re
     const parsedSla = sla_horas !== undefined && sla_horas !== null && sla_horas !== '' ? parseInt(sla_horas, 10) : null;
     const result = await dbRun(
       `INSERT INTO crm_kanban_estagios 
-        (nome, pipeline_tipo, cor, ordem, motivos_perda, exigir_obs, exigir_valor, exigir_email, exigir_documentos, exigir_dados_conta, 
+        (nome, pipeline_tipo, cor, ordem, motivos_perda, exigir_obs, exigir_valor, exigir_email, exigir_documentos, exigir_dados_conta, exigir_observacao,
          exibir_valor, exibir_cpf, exibir_telefone, exibir_email, exibir_documentos, exibir_observacao,
          modal_exibir_valor, modal_exibir_email, modal_exibir_docs, modal_exibir_obs, modal_exibir_historico, modal_exibir_closer, modal_exibir_dados_bancarios, sla_horas) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         nome.trim(),
         pipeline_tipo,
@@ -3716,6 +3732,7 @@ app.post('/api/crm/admin/estagios', requireAuth, requireRole('admin'), async (re
         exigir_email !== undefined ? !!exigir_email : false,
         exigir_documentos !== undefined ? !!exigir_documentos : false,
         exigir_dados_conta !== undefined ? !!exigir_dados_conta : false,
+        exigir_observacao !== undefined ? !!exigir_observacao : false,
         exibir_valor !== undefined ? !!exibir_valor : true,
         exibir_cpf !== undefined ? !!exibir_cpf : true,
         exibir_telefone !== undefined ? !!exibir_telefone : true,
@@ -3743,7 +3760,7 @@ app.put('/api/crm/admin/estagios/:id', requireAuth, requireRole('admin'), async 
   const { id } = req.params;
   const { 
     nome, cor, ordem, ativo, motivos_perda, exigir_obs,
-    exigir_valor, exigir_email, exigir_documentos, exigir_dados_conta,
+    exigir_valor, exigir_email, exigir_documentos, exigir_dados_conta, exigir_observacao,
     exibir_valor, exibir_cpf, exibir_telefone,
     exibir_email, exibir_documentos, exibir_observacao,
     modal_exibir_valor, modal_exibir_email, modal_exibir_docs,
@@ -3768,6 +3785,7 @@ app.put('/api/crm/admin/estagios/:id', requireAuth, requireRole('admin'), async 
         exigir_email = COALESCE(?, exigir_email),
         exigir_documentos = COALESCE(?, exigir_documentos),
         exigir_dados_conta = COALESCE(?, exigir_dados_conta),
+        exigir_observacao = COALESCE(?, exigir_observacao),
         exibir_valor = COALESCE(?, exibir_valor),
         exibir_cpf = COALESCE(?, exibir_cpf),
         exibir_telefone = COALESCE(?, exibir_telefone),
@@ -3794,6 +3812,7 @@ app.put('/api/crm/admin/estagios/:id', requireAuth, requireRole('admin'), async 
         exigir_email !== undefined ? !!exigir_email : null,
         exigir_documentos !== undefined ? !!exigir_documentos : null,
         exigir_dados_conta !== undefined ? !!exigir_dados_conta : null,
+        exigir_observacao !== undefined ? !!exigir_observacao : null,
         exibir_valor !== undefined ? !!exibir_valor : null,
         exibir_cpf !== undefined ? !!exibir_cpf : null,
         exibir_telefone !== undefined ? !!exibir_telefone : null,
