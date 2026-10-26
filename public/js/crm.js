@@ -436,6 +436,7 @@ function renderKanbanCard(lead, pipelineTipo) {
   const exibirTelefone = stage ? stage.exibir_telefone !== false : true;
   const exibirEmail = stage ? !!stage.exibir_email : false;
   const exibirDocs = stage ? !!stage.exibir_documentos : false;
+  const exibirObs = stage ? !!stage.exibir_observacao : false;
 
   const valorContrato = getLeadValorContrato(lead);
   const valorHtml = (exibirValor && valorContrato > 0)
@@ -519,6 +520,7 @@ function renderKanbanCard(lead, pipelineTipo) {
       ${valorHtml}
       ${notaBadgeHtml}
       ${docsBadgeHtml}
+      ${(exibirObs && lead.cliente_observacoes && String(lead.cliente_observacoes).trim()) ? `<div style="margin-top: 4px; display: flex; align-items: flex-start; gap: 5px; background: rgba(168, 85, 247, 0.08); color: rgba(255,255,255,0.85); border: 1px solid rgba(168, 85, 247, 0.2); padding: 5px 8px; border-radius: 6px; font-size: 11px; line-height: 1.4; max-height: 42px; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(lead.cliente_observacoes)}"><i data-lucide="message-square-text" style="width: 11px; height: 11px; flex-shrink: 0; margin-top: 1px; color: #C084FC;"></i><span style="overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${escapeHtml(lead.cliente_observacoes)}</span></div>` : ''}
       ${slaBadgeHtml}
     </div>
     <div class="kanban-card-footer">
@@ -1457,6 +1459,7 @@ function initCrmAdminForms() {
     const exibir_telefone = document.getElementById('estagio-exibir-telefone')?.checked ?? true;
     const exibir_email = document.getElementById('estagio-exibir-email')?.checked || false;
     const exibir_documentos = document.getElementById('estagio-exibir-documentos')?.checked || false;
+    const exibir_observacao = document.getElementById('estagio-exibir-observacao')?.checked || false;
     const modal_exibir_valor = document.getElementById('estagio-modal-exibir-valor')?.checked ?? true;
     const modal_exibir_email = document.getElementById('estagio-modal-exibir-email')?.checked ?? true;
     const modal_exibir_docs = document.getElementById('estagio-modal-exibir-docs')?.checked ?? true;
@@ -1473,7 +1476,7 @@ function initCrmAdminForms() {
         nome, pipeline_tipo, cor, ordem, motivos_perda, exigir_obs,
         exigir_valor, exigir_email, exigir_documentos, exigir_dados_conta,
         exibir_valor, exibir_cpf, exibir_telefone,
-        exibir_email, exibir_documentos,
+        exibir_email, exibir_documentos, exibir_observacao,
         modal_exibir_valor, modal_exibir_email, modal_exibir_docs,
         modal_exibir_obs, modal_exibir_historico, modal_exibir_closer,
         modal_exibir_dados_bancarios,
@@ -1511,6 +1514,7 @@ function initCrmAdminForms() {
     const exibir_telefone = document.getElementById('edit-estagio-exibir-telefone')?.checked ?? true;
     const exibir_email = document.getElementById('edit-estagio-exibir-email')?.checked || false;
     const exibir_documentos = document.getElementById('edit-estagio-exibir-documentos')?.checked || false;
+    const exibir_observacao = document.getElementById('edit-estagio-exibir-observacao')?.checked || false;
     const modal_exibir_valor = document.getElementById('edit-estagio-modal-exibir-valor')?.checked ?? true;
     const modal_exibir_email = document.getElementById('edit-estagio-modal-exibir-email')?.checked ?? true;
     const modal_exibir_docs = document.getElementById('edit-estagio-modal-exibir-docs')?.checked ?? true;
@@ -1527,7 +1531,7 @@ function initCrmAdminForms() {
         nome, cor, ordem, motivos_perda, exigir_obs,
         exigir_valor, exigir_email, exigir_documentos, exigir_dados_conta,
         exibir_valor, exibir_cpf, exibir_telefone,
-        exibir_email, exibir_documentos,
+        exibir_email, exibir_documentos, exibir_observacao,
         modal_exibir_valor, modal_exibir_email, modal_exibir_docs,
         modal_exibir_obs, modal_exibir_historico, modal_exibir_closer,
         modal_exibir_dados_bancarios,
@@ -1717,6 +1721,7 @@ async function loadCrmAdminEstagios() {
     let visExtras = [];
     if (e.exibir_email) visExtras.push('E-mail');
     if (e.exibir_documentos) visExtras.push('Docs');
+    if (e.exibir_observacao) visExtras.push('Observação');
 
     const visOcultasHtml = visOcultas.length > 0 
       ? `<span class="badge" style="background: rgba(148, 163, 184, 0.15); color: #94A3B8; border: 1px solid rgba(148, 163, 184, 0.25); font-size: 10px;">👁️ Oculta: ${visOcultas.join(', ')}</span>` 
@@ -1775,6 +1780,7 @@ function openEditEstagioModal(id) {
   document.getElementById('edit-estagio-exibir-telefone').checked = estagio.exibir_telefone !== false;
   document.getElementById('edit-estagio-exibir-email').checked = !!estagio.exibir_email;
   document.getElementById('edit-estagio-exibir-documentos').checked = !!estagio.exibir_documentos;
+  document.getElementById('edit-estagio-exibir-observacao').checked = !!estagio.exibir_observacao;
   // Novos campos — Visibilidade no Modal
   document.getElementById('edit-estagio-modal-exibir-valor').checked = estagio.modal_exibir_valor !== false;
   document.getElementById('edit-estagio-modal-exibir-email').checked = estagio.modal_exibir_email !== false;
